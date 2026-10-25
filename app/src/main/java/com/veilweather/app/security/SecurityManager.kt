@@ -21,6 +21,13 @@ enum class UnlockState {
     UNLOCKED_DURESS
 }
 
+enum class CodeResult {
+    VALID,
+    DURESS,
+    PANIC,
+    INVALID
+}
+
 @Singleton
 class SecurityManager @Inject constructor(
     @ApplicationContext private val context: Context

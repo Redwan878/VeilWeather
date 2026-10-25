@@ -78,15 +78,20 @@ fun UnlockScreen(
                             scope.launch {
                                 val result = securityManager.verifyCode(codeInput)
                                 when {
-                                    result == SecurityManager.CodeResult.VALID -> {
+                                    result == CodeResult.VALID -> {
                                         step = UnlockStep.FINGERPRINT
                                         error = ""
                                     }
-                                    result == SecurityManager.CodeResult.DURESS -> {
+                                    result == CodeResult.DURESS -> {
                                         // Go directly to duress (fake) messenger
                                         onUnlocked(false)
                                     }
-                                    result == SecurityManager.CodeResult.INVALID -> {
+                                    result == CodeResult.PANIC -> {
+                                        // Panic wipe
+                                        securityManager.panicWipe()
+                                        onCancel()
+                                    }
+                                    else -> {
                                         error = "Invalid code"
                                     }
                                 }
@@ -132,7 +137,7 @@ fun UnlockScreen(
                         onClick = {
                             scope.launch {
                                 // Check if biometric is available
-                                if (biometricManager?.isBiometricAvailable() == true) {
+                                if (biometricManager?.isAvailable() == true) {
                                     val success = biometricManager.authenticate()
                                     if (success) {
                                         securityManager.unlock()
