@@ -155,6 +155,7 @@ fun MessengerScreen(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun ChatListItem(
     chat: Chat,
     onClick: () -> Unit
