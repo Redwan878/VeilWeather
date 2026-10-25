@@ -16,7 +16,9 @@ import androidx.compose.runtime.Composable
 
 sealed class Screen(val route: String) {
     object Weather : Screen("weather")
-    object Unlock : Screen("unlock")
+    object Unlock : Screen("unlock?skipCode={skipCode}") {
+        fun createRoute(skipCode: Boolean = false) = "unlock?skipCode=$skipCode"
+    }
     object Messenger : Screen("messenger")
     object Chat : Screen("chat/{chatId}") {
         fun createRoute(chatId: String) = "chat/$chatId"
@@ -47,8 +49,8 @@ fun VeilWeatherNavHost() {
             WeatherScreen(
                 onSecretCodeEntered = { code ->
                     if (code == "8546") {
-                        // Secret code triggers unlock flow
-                        navController.navigate(Screen.Unlock.route)
+                        // Secret code triggers unlock flow - skip code entry, go to fingerprint
+                        navController.navigate(Screen.Unlock.route + "?skipCode=true")
                     } else if (code == "0000") {
                         // Panic wipe
                         securityManager.panicWipe()
@@ -65,8 +67,18 @@ fun VeilWeatherNavHost() {
         }
 
         // Unlock Screen
-        composable(Screen.Unlock.route) {
+        composable(
+            route = Screen.Unlock.route,
+            arguments = listOf(
+                navArgument("skipCode") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val skipCode = backStackEntry.arguments?.getBoolean("skipCode") ?: false
             UnlockScreen(
+                skipCodeEntry = skipCode,
                 onUnlocked = { isRealMessenger ->
                     if (isRealMessenger) {
                         navController.navigate(Screen.Messenger.route) {

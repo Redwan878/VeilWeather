@@ -88,7 +88,7 @@ class WebSocketManager @Inject constructor(
         }
     }
     
-    private inner class MyWebSocketListener(private val userId: String) : WebSocketListener() {
+    private inner class MyWebSocketListener(private val userId: String) : okhttp3.WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.d(TAG, "WebSocket connected")
             _connectionState.value = ConnectionState.CONNECTED

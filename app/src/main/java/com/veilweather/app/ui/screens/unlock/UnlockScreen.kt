@@ -9,16 +9,25 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.veilweather.app.security.SecurityManager
 import com.veilweather.app.security.BiometricManager
+import kotlinx.coroutines.launch
+
+enum class UnlockStep {
+    CODE,      // Only used when directly opening unlock screen
+    FINGERPRINT,
+    UNLOCKED
+}
 
 @Composable
 fun UnlockScreen(
     onUnlocked: (isReal: Boolean) -> Unit,
     onCancel: () -> Unit,
     securityManager: SecurityManager = SecurityManager.getInstance(),
-    biometricManager: BiometricManager? = null
+    biometricManager: BiometricManager? = null,
+    skipCodeEntry: Boolean = false // New parameter - skip code if entered via search
 ) {
-    var codeInput by remember { mutableStateOf("") }
-    var step by remember { mutableStateOf(UnlockStep.CODE) }
+    var step by remember { 
+        mutableStateOf(if (skipCodeEntry) UnlockStep.FINGERPRINT else UnlockStep.CODE) 
+    }
     var error by remember { mutableStateOf("") }
     var isWaiting by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -42,124 +51,129 @@ fun UnlockScreen(
                     )
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    var codeInput by remember { mutableStateOf("") }
+
                     OutlinedTextField(
                         value = codeInput,
                         onValueChange = { codeInput = it },
                         label = { Text("Code") },
                         visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        singleLine = true
+                        modifier = Modifier.fillMaxWidth()
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (error.isNotEmpty()) {
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    Button(
+                        onClick = {
+                            isWaiting = true
+                            scope.launch {
+                                val result = securityManager.verifyCode(codeInput)
+                                when {
+                                    result == SecurityManager.CodeResult.VALID -> {
+                                        step = UnlockStep.FINGERPRINT
+                                        error = ""
+                                    }
+                                    result == SecurityManager.CodeResult.DURESS -> {
+                                        // Go directly to duress (fake) messenger
+                                        onUnlocked(false)
+                                    }
+                                    result == SecurityManager.CodeResult.INVALID -> {
+                                        error = "Invalid code"
+                                    }
+                                }
+                                isWaiting = false
+                            }
+                        },
+                        enabled = !isWaiting && codeInput.isNotEmpty(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (isWaiting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else {
+                            Text("Verify")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    TextButton(onClick = onCancel) {
+                        Text("Cancel")
+                    }
+                }
+
+                UnlockStep.FINGERPRINT -> {
+                    Text(
+                        text = "Biometric Verification",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Show fingerprint icon
+                    Text(
+                        text = "Touch the fingerprint sensor",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                // Check if biometric is available
+                                if (biometricManager?.isBiometricAvailable() == true) {
+                                    val success = biometricManager.authenticate()
+                                    if (success) {
+                                        securityManager.unlock()
+                                        onUnlocked(true)
+                                    } else {
+                                        error = "Biometric failed"
+                                    }
+                                } else {
+                                    // No biometric - unlock directly
+                                    securityManager.unlock()
+                                    onUnlocked(true)
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Authenticate")
+                    }
 
                     if (error.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = error,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = onCancel,
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            colors = ButtonDefaults.outlinedButtonColors()
-                        ) {
-                            Text("Cancel")
-                        }
-
-                        Button(
-                            onClick = {
-                                when {
-                                    securityManager.verifySecretCode(codeInput) -> {
-                                        // Real messenger - require biometric
-                                        step = UnlockStep.BIOMETRIC
-                                        error = ""
-                                    }
-                                    securityManager.verifyDuressCode(codeInput) -> {
-                                        // Duress - fake messenger
-                                        securityManager.unlockWithDuress()
-                                        onUnlocked(false)
-                                    }
-                                    securityManager.verifyPanicCode(codeInput) -> {
-                                        // Panic wipe
-                                        securityManager.panicWipe()
-                                        onCancel()
-                                    }
-                                    else -> {
-                                        error = "Invalid code"
-                                        codeInput = ""
-                                    }
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            enabled = codeInput.isNotEmpty() && !isWaiting
-                        ) {
-                            Text("Unlock")
-                        }
+                    TextButton(onClick = { step = UnlockStep.CODE }) {
+                        Text("Use Code Instead")
                     }
                 }
 
-                UnlockStep.BIOMETRIC -> {
+                UnlockStep.UNLOCKED -> {
                     Text(
-                        text = "Verify Identity",
+                        text = "Unlocked!",
                         style = MaterialTheme.typography.headlineMedium
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "Place your finger on the scanner",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Spacer(modifier = Modifier.height(48.dp))
-                    
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(64.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(48.dp))
-                    
-                    Button(
-                        onClick = {
-                            step = UnlockStep.CODE
-                            codeInput = ""
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.outlinedButtonColors()
-                    ) {
-                        Text("Back")
-                    }
-                    
-                    // Trigger biometric in background
-                    LaunchedEffect(Unit) {
-                        isWaiting = true
-                        // Simulate biometric delay
-                        kotlinx.coroutines.delay(2000)
-                        securityManager.unlock()
-                        onUnlocked(true)
-                    }
                 }
             }
         }
     }
-}
-
-enum class UnlockStep {
-    CODE, BIOMETRIC
 }

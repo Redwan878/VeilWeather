@@ -104,9 +104,6 @@ fun SettingsScreen(
 
             OutlinedButton(
                 onClick = { confirmWipe = true },
-                colors = ButtonDefaults.outlinedButtonColors(
-                    borderColor = MaterialTheme.colorScheme.error
-                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
