@@ -1,10 +1,9 @@
-// App module build file
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.dagger.hilt.android")
-    id("org.jetbrains.kotlin.plugin.serialization")
-    kotlin("kapt")
+    id("com.android.application") version "8.2.0" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.21" apply false
+    id("com.google.dagger.hilt.android") version "2.48.1" apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21" apply false
+    id("kotlin-kapt") version "1.9.21" apply false
 }
 
 android {
@@ -94,9 +93,6 @@ dependencies {
     // Security
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("androidx.biometric:biometric:1.1.0")
-
-    // WebSocket
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
