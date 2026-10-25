@@ -159,7 +159,7 @@ fun ChatListItem(
     chat: Chat,
     onClick: () -> Unit
 ) {
-    Card(
+    androidx.compose.material3.Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
