@@ -53,7 +53,7 @@ class WebSocketManager @Inject constructor(
             .addHeader("Authorization", "Bearer $token")
             .build()
         
-        webSocket = httpClient.newWebSocket(request, WebSocketListener(userId))
+        webSocket = httpClient.newWebSocket(request, MyWebSocketListener(userId))
         _connectionState.value = ConnectionState.CONNECTING
     }
     
@@ -88,7 +88,7 @@ class WebSocketManager @Inject constructor(
         }
     }
     
-    private inner class WebSocketListener(private val userId: String) : WebSocket.Listener {
+    private inner class MyWebSocketListener(private val userId: String) : WebSocketListener() {
         override fun onOpen(webSocket: WebSocket, response: Response) {
             Log.d(TAG, "WebSocket connected")
             _connectionState.value = ConnectionState.CONNECTED
