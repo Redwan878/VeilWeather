@@ -173,9 +173,7 @@ class DoubleRatchetManager {
 
     private fun deriveRootKey(sharedSecret: ByteArray, publicKey: ByteArray): ByteArray {
         // Simplified - use HKDF in production
-        val keyGen = javax.crypto.KeyGenerator.getInstance("HmacSHA256")
-        keyGen.init(sharedSecret)
-        val key = keyGen.generateKey()
+        val key = SecretKeySpec(sharedSecret, "HmacSHA256")
         val mac = javax.crypto.Mac.getInstance("HmacSHA256")
         mac.init(key)
         return mac.doFinal(publicKey)
@@ -233,9 +231,7 @@ class DoubleRatchetManager {
     }
 
     private fun deriveMessageKey(chainKey: ByteArray): ByteArray {
-        val keyGen = javax.crypto.KeyGenerator.getInstance("HmacSHA256")
-        keyGen.init(chainKey)
-        val key = keyGen.generateKey()
+        val key = SecretKeySpec(chainKey, "HmacSHA256")
         val mac = javax.crypto.Mac.getInstance("HmacSHA256")
         mac.init(key)
         return mac.doFinal("messagekey".toByteArray())

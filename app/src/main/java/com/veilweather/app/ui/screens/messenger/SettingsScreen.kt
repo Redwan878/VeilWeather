@@ -1,6 +1,7 @@
 package com.veilweather.app.ui.screens.messenger
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -104,9 +105,7 @@ fun SettingsScreen(
 
             OutlinedButton(
                 onClick = { confirmWipe = true },
-                colors = ButtonDefaults.outlinedButtonColors(
-                    borderColor = MaterialTheme.colorScheme.error
-                ),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)

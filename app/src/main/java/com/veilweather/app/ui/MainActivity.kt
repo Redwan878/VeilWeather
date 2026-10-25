@@ -10,14 +10,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.veilweather.app.ui.navigation.VeilWeatherNavHost
 import com.veilweather.app.ui.theme.VeilWeatherTheme
 import com.veilweather.app.security.SecurityManager
 import com.veilweather.app.data.repository.MessengerStateRepository
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -54,21 +52,21 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setupLifecycleObservers() {
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.Event.ON_STOP) {
-                // Instant lockdown: wipe in-memory chat state
-                messengerStateRepository.lockdown()
-            }
-        }
-        
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.Event.ON_PAUSE) {
-                // Additional lockdown on background
-                if (!securityManager.isUnlocked()) {
-                    messengerStateRepository.clearSensitiveData()
+        lifecycle.addObserver(LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> {
+                    // Instant lockdown: wipe in-memory chat state
+                    messengerStateRepository.lockdown()
                 }
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Additional lockdown on background
+                    if (!securityManager.isUnlocked()) {
+                        messengerStateRepository.clearSensitiveData()
+                    }
+                }
+                else -> Unit
             }
-        }
+        })
     }
 
     override fun onPause() {
