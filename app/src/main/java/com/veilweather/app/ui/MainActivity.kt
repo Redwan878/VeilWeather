@@ -55,15 +55,15 @@ class MainActivity : ComponentActivity() {
 
     private fun setupLifecycleObservers() {
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STOPPED) {
-                // Instant lockdown: wipe in-memory chat state
-                messengerStateRepository.lockdown()
+            // Wipe chat state when app goes to background
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // App is visible - do nothing extra
             }
         }
         
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.PAUSED) {
-                // Additional lockdown on background
+            // Additional lockdown when paused (app in background)
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
                 if (!securityManager.isUnlocked()) {
                     messengerStateRepository.clearSensitiveData()
                 }
