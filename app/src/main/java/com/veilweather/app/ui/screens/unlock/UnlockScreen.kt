@@ -7,11 +7,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.veilweather.app.security.SecurityManager
 import com.veilweather.app.security.BiometricManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun UnlockScreen(

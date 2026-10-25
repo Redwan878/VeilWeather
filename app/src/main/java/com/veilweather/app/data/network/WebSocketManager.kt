@@ -11,34 +11,20 @@ import javax.inject.Singleton
 import android.util.Log
 
 @Serializable
-sealed class WebSocketMessage {
-    @Serializable
-    data class Auth(val userId: String, val token: String) : WebSocketMessage()
-    
-    @Serializable
-    data class SendMessage(val chatId: String, val content: String, val timestamp: Long) : WebSocketMessage()
-    
-    @Serializable
-    data class ReceiveMessage(val chatId: String, val senderId: String, val content: String, val timestamp: Long) : WebSocketMessage()
-    
-    @Serializable
-    data class DeliveryAck(val messageId: String) : WebSocketMessage()
-    
-    @Serializable
-    data class ReadReceipt(val messageId: String, val readAt: Long) : WebSocketMessage()
-    
-    @Serializable
-    data class Typing(val chatId: String, val isTyping: Boolean) : WebSocketMessage()
-    
-    @Serializable
-    data class CallSignal(val chatId: String, val sdp: String, val ice: String) : WebSocketMessage()
-    
-    @Serializable
-    data class Ping : WebSocketMessage()
-    
-    @Serializable
-    data class Pong : WebSocketMessage()
-}
+data class WebSocketMessage(
+    val type: String = "",
+    val chatId: String = "",
+    val content: String = "",
+    val senderId: String = "",
+    val timestamp: Long = 0L,
+    val messageId: String = "",
+    val readAt: Long = 0L,
+    val isTyping: Boolean = false,
+    val sdp: String = "",
+    val ice: String = "",
+    val userId: String = "",
+    val token: String = ""
+)
 
 @Singleton
 class WebSocketManager @Inject constructor(

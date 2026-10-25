@@ -12,8 +12,6 @@ import com.veilweather.app.ui.screens.messenger.MessengerScreen
 import com.veilweather.app.ui.screens.messenger.ChatScreen
 import com.veilweather.app.ui.screens.messenger.SettingsScreen
 import com.veilweather.app.security.SecurityManager
-import com.veilweather.app.security.UnlockState
-import javax.inject.Inject
 import androidx.compose.runtime.Composable
 
 sealed class Screen(val route: String) {
