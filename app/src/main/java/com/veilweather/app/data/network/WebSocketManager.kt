@@ -43,13 +43,13 @@ class WebSocketManager @Inject constructor(
     
     private val _offlineQueue = mutableListOf<WebSocketMessage>()
     
-    fun connect(serverUrl: String, userId: String, token: String) {
+    fun connect(userId: String, token: String) {
         if (webSocket != null) {
             return
         }
         
         val request = Request.Builder()
-            .url(serverUrl)
+            .url("${BackendConfig.webSocketUrl}?token=${token.encodeUrlParameter()}")
             .addHeader("Authorization", "Bearer $token")
             .build()
         
@@ -132,3 +132,6 @@ class WebSocketManager @Inject constructor(
 enum class ConnectionState {
     DISCONNECTED, CONNECTING, CONNECTED, FAILED
 }
+
+private fun String.encodeUrlParameter(): String =
+    java.net.URLEncoder.encode(this, Charsets.UTF_8.name())
