@@ -50,7 +50,7 @@ fun VeilWeatherNavHost() {
                 onSecretCodeEntered = { code ->
                     if (code == "8546") {
                         // Secret code triggers unlock flow - skip code entry, go to fingerprint
-                        navController.navigate(Screen.Unlock.route + "?skipCode=true")
+                        navController.navigate(Screen.Unlock.createRoute(skipCode = true))
                     } else if (code == "0000") {
                         // Panic wipe
                         securityManager.panicWipe()
