@@ -204,6 +204,13 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - PostgreSQL: Session metadata (optional)
 - No plaintext storage
 
+The Android app uses `https://veilweather-backend.onrender.com` by default.
+Build against another backend with:
+
+```bash
+./gradlew assembleRelease -PbackendBaseUrl=https://your-backend.example.com
+```
+
 ## Secret Codes
 
 | Code | Action |
