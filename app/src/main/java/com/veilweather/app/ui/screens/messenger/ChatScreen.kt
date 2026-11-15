@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -31,6 +32,7 @@ fun ChatScreen(
     val listState = rememberLazyListState()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { Text("Chat") },
@@ -51,10 +53,10 @@ fun ChatScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
@@ -86,7 +88,7 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 12.dp),
             reverseLayout = true
         ) {
             items(messages.reversed()) { message ->
@@ -95,7 +97,6 @@ fun ChatScreen(
         }
     }
 
-    // Disappearing Timer Dialog
     if (showDisappearingTimer) {
         DisappearingTimerDialog(
             currentTimer = selectedTimer,
@@ -118,18 +119,23 @@ fun MessageInputBar(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        tonalElevation = 3.dp
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onAttach) {
-                Icon(Icons.Default.AttachFile, contentDescription = "Attach")
+                Icon(
+                    Icons.Default.AttachFile,
+                    contentDescription = "Attach",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            
+
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
@@ -137,18 +143,20 @@ fun MessageInputBar(
                     .weight(1f)
                     .padding(horizontal = 4.dp),
                 placeholder = { Text("Message") },
+                shape = RoundedCornerShape(22.dp),
                 singleLine = false,
                 maxLines = 4
             )
 
-            if (value.isBlank()) {
-                IconButton(onClick = onVoiceNote) {
-                    Icon(Icons.Default.Mic, contentDescription = "Voice note")
-                }
-            } else {
-                IconButton(onClick = onSend) {
-                    Icon(Icons.Default.Send, contentDescription = "Send")
-                }
+            Spacer(modifier = Modifier.width(4.dp))
+
+            FilledIconButton(
+                onClick = if (value.isBlank()) onVoiceNote else onSend
+            ) {
+                Icon(
+                    if (value.isBlank()) Icons.Default.Mic else Icons.Default.Send,
+                    contentDescription = if (value.isBlank()) "Voice note" else "Send"
+                )
             }
         }
     }
@@ -158,87 +166,114 @@ fun MessageInputBar(
 fun MessageBubble(message: ChatMessage) {
     val isSent = message.senderId == "me"
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 3.dp),
         contentAlignment = if (isSent) Alignment.CenterEnd else Alignment.CenterStart
     ) {
         Surface(
-            shape = MaterialTheme.shapes.medium,
-            color = if (isSent) 
-                MaterialTheme.colorScheme.primary 
-            else 
-                MaterialTheme.colorScheme.surfaceVariant,
+            shape = if (isSent) {
+                RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 4.dp, bottomStart = 18.dp)
+            } else {
+                RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 4.dp)
+            },
+            color = if (isSent) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
             modifier = Modifier.widthIn(max = 280.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(12.dp)
-            ) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
                 when (message.type) {
                     MessageType.TEXT -> {
                         Text(
                             text = message.content,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (isSent) 
-                                MaterialTheme.colorScheme.onPrimary 
-                            else 
-                                MaterialTheme.colorScheme.onSurface
+                            color = if (isSent) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     }
                     MessageType.IMAGE -> {
-                        // Image placeholder
                         Icon(
                             Icons.Default.Image,
                             contentDescription = "Image",
-                            modifier = Modifier.size(200.dp)
+                            modifier = Modifier.size(200.dp),
+                            tint = if (isSent) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     }
                     MessageType.VOICE -> {
-                        // Voice note waveform placeholder
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.PlayArrow, "Play")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = "Play",
+                                tint = if (isSent) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Voice note")
+                            Text(
+                                "Voice note",
+                                color = if (isSent) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
                         }
                     }
                     else -> {
-                        Text("Unsupported message type")
+                        Text(
+                            "Unsupported message type",
+                            color = if (isSent) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            }
+                        )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(4.dp))
-                
+
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = timeFormat.format(Date(message.timestamp)),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isSent) 
+                        color = if (isSent) {
                             MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-                        else 
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        }
                     )
-                    
-                    // Disappearing timer indicator
+
                     message.expiresAt?.let {
                         Icon(
                             Icons.Default.Timer,
                             contentDescription = "Disappearing",
                             modifier = Modifier.size(12.dp),
-                            tint = if (isSent) 
+                            tint = if (isSent) {
                                 MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-                            else 
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            }
                         )
                     }
-                    
-                    // Read indicator
+
                     if (isSent && message.isRead) {
                         Icon(
                             Icons.Default.DoneAll,
@@ -268,10 +303,18 @@ fun DisappearingTimerDialog(
         43200000L to "12 hours",
         86400000L to "24 hours"
     )
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Disappearing Messages") },
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Default.Timer, contentDescription = null)
+                Text("Disappearing Messages")
+            }
+        },
         text = {
             Column {
                 timers.forEach { (timer, label) ->
@@ -283,9 +326,20 @@ fun DisappearingTimerDialog(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(label)
+                            Text(
+                                label,
+                                color = if (timer == currentTimer) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                }
+                            )
                             if (timer == currentTimer) {
-                                Icon(Icons.Default.Check, "Selected")
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                             }
                         }
                     }

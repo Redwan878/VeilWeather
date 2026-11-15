@@ -1,12 +1,16 @@
 package com.veilweather.app.ui.screens.messenger
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.veilweather.app.security.SecurityManager
 
@@ -24,6 +28,7 @@ fun SettingsScreen(
     var confirmWipe by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { Text("Settings") },
@@ -33,10 +38,10 @@ fun SettingsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -45,73 +50,89 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Security Settings", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Secret Code
-            OutlinedTextField(
-                value = secretCodeInput,
-                onValueChange = { secretCodeInput = it },
-                label = { Text("New Secret Code") },
-                placeholder = { Text("Enter new code") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    if (secretCodeInput.length >= 4) {
-                        onChangeSecretCode(secretCodeInput)
-                        secretCodeInput = ""
-                    }
-                },
-                enabled = secretCodeInput.length >= 4,
-                modifier = Modifier.fillMaxWidth()
+            SettingsSection(
+                icon = Icons.Default.Lock,
+                title = "Access Codes"
             ) {
-                Text("Change Secret Code")
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Duress Code
-            OutlinedTextField(
-                value = duressCodeInput,
-                onValueChange = { duressCodeInput = it },
-                label = { Text("New Duress Code") },
-                placeholder = { Text("Enter new duress code") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = {
-                    if (duressCodeInput.length >= 4) {
-                        onChangeDuressCode(duressCodeInput)
-                        duressCodeInput = ""
-                    }
-                },
-                enabled = duressCodeInput.length >= 4,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Change Duress Code")
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Danger Zone
-            Text("Danger Zone", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedButton(
-                onClick = { confirmWipe = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Panic Wipe",
-                    color = MaterialTheme.colorScheme.error
+                OutlinedTextField(
+                    value = secretCodeInput,
+                    onValueChange = { secretCodeInput = it },
+                    label = { Text("New secret code") },
+                    placeholder = { Text("Minimum 4 characters") },
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = {
+                        if (secretCodeInput.length >= 4) {
+                            onChangeSecretCode(secretCodeInput)
+                            secretCodeInput = ""
+                        }
+                    },
+                    enabled = secretCodeInput.length >= 4,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save secret code")
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                OutlinedTextField(
+                    value = duressCodeInput,
+                    onValueChange = { duressCodeInput = it },
+                    label = { Text("New duress code") },
+                    placeholder = { Text("Opens the decoy messenger") },
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Button(
+                    onClick = {
+                        if (duressCodeInput.length >= 4) {
+                            onChangeDuressCode(duressCodeInput)
+                            duressCodeInput = ""
+                        }
+                    },
+                    enabled = duressCodeInput.length >= 4,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save duress code")
+                }
+            }
+
+            SettingsSection(
+                icon = Icons.Default.Warning,
+                title = "Danger Zone",
+                isError = true
+            ) {
+                Text(
+                    "Wiping erases all encryption keys, chats and media. This cannot be undone.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = { confirmWipe = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Panic wipe")
+                }
             }
         }
     }
@@ -119,15 +140,14 @@ fun SettingsScreen(
     if (confirmWipe) {
         AlertDialog(
             onDismissRequest = { confirmWipe = false },
-            title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                    Text("Panic Wipe")
-                }
+            icon = {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
             },
+            title = { Text("Panic wipe") },
             text = {
                 Text("This will erase all encryption keys, chats, and media. Are you sure?")
             },
@@ -150,5 +170,61 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    icon: ImageVector,
+    title: String,
+    isError: Boolean = false,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isError) {
+                        MaterialTheme.colorScheme.errorContainer
+                    } else {
+                        MaterialTheme.colorScheme.primaryContainer
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = if (isError) {
+                                MaterialTheme.colorScheme.onErrorContainer
+                            } else {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (isError) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            content()
+        }
     }
 }

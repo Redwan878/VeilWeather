@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -26,12 +27,13 @@ fun WeatherScreen(
     var searchQuery by remember { mutableStateOf("") }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
-                title = { Text("VeilWeather") },
+                title = { Text("Weather") },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         }
@@ -47,8 +49,7 @@ fun WeatherScreen(
                 onValueChange = { newValue ->
                     searchQuery = newValue
                     viewModel.onSearchQueryChanged(newValue)
-                    
-                    // Check for secret codes
+
                     when (newValue) {
                         "8546" -> {
                             onSecretCodeEntered(newValue)
@@ -70,9 +71,10 @@ fun WeatherScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Search location...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                shape = RoundedCornerShape(28.dp),
                 singleLine = true
             )
 
@@ -85,44 +87,57 @@ fun WeatherScreen(
                         .padding(horizontal = 16.dp)
                 ) {
                     items(uiState.searchResults) { location ->
-                        TextButton(
-                            onClick = { viewModel.selectLocation(location) },
-                            modifier = Modifier.fillMaxWidth()
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp),
+                            onClick = { viewModel.selectLocation(location) }
                         ) {
                             Text(
                                 text = "${location.name}, ${location.country}",
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Start
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                textAlign = TextAlign.Start,
+                                style = MaterialTheme.typography.bodyLarge
                             )
                         }
                     }
                 }
             }
 
-            // Current Weather Display
+            // Current Weather hero card
             uiState.currentWeather?.let { weather ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
                             text = "${weather.temperature.toInt()}°",
-                            style = MaterialTheme.typography.displayLarge
+                            style = MaterialTheme.typography.displayLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                         Text(
                             text = weather.description,
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Weather details
+                        Spacer(modifier = Modifier.height(20.dp))
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceAround
@@ -140,9 +155,9 @@ fun WeatherScreen(
                 Text(
                     text = "Hourly Forecast",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
-                
+
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 16.dp)
@@ -158,9 +173,9 @@ fun WeatherScreen(
                 Text(
                     text = "7-Day Forecast",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
-                
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -172,7 +187,6 @@ fun WeatherScreen(
                 }
             }
 
-            // Loading indicator
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -182,7 +196,6 @@ fun WeatherScreen(
                 }
             }
 
-            // Error message
             uiState.error?.let { error ->
                 Snackbar(
                     modifier = Modifier.padding(16.dp),
@@ -204,12 +217,13 @@ fun WeatherDetail(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
         )
     }
 }
@@ -217,21 +231,29 @@ fun WeatherDetail(label: String, value: String) {
 @Composable
 fun HourlyWeatherCard(hourly: com.veilweather.app.data.model.HourlyWeather) {
     val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(hourly.timestamp))
-    
-    Card(
+
+    Surface(
         modifier = Modifier
-            .width(80.dp)
-            .padding(4.dp)
+            .width(76.dp)
+            .padding(4.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 1.dp
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier.padding(vertical = 12.dp, horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(time, style = MaterialTheme.typography.bodySmall)
-            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                time,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 "${hourly.temperature.toInt()}°",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -240,24 +262,32 @@ fun HourlyWeatherCard(hourly: com.veilweather.app.data.model.HourlyWeather) {
 @Composable
 fun DailyWeatherCard(daily: com.veilweather.app.data.model.DailyWeather) {
     val day = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(Date(daily.timestamp))
-    
-    Card(
+
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 3.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 1.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(day, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                day,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Row {
                 Text(
                     "${daily.maxTemp.toInt()}°",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     " / ${daily.minTemp.toInt()}°",

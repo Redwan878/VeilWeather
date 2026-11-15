@@ -1,14 +1,19 @@
 package com.veilweather.app.ui.screens.messenger
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.veilweather.app.data.model.Chat
 import com.veilweather.app.data.model.ChatType
@@ -26,6 +31,7 @@ fun MessengerScreen(
     var showNewChat by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
                 title = { Text("Messages") },
@@ -40,20 +46,21 @@ fun MessengerScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = { showNewChat = true },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "New chat")
-            }
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("New") }
+            )
         }
     ) { padding ->
         Column(
@@ -61,57 +68,62 @@ fun MessengerScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Search/Pairing Bar (Secret code "185423" triggers pairing)
+            // Search / pairing bar — "185423" pairs, "wipe" remote-wipes
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { newValue ->
                     searchQuery = newValue
                     if (newValue == "185423") {
-                        // Pairing code entered
-                        if (onPairingCode(newValue)) {
-                            searchQuery = ""
-                        }
+                        if (onPairingCode(newValue)) searchQuery = ""
                     } else if (newValue == "wipe") {
-                        // Remote wipe
                         searchQuery = ""
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Search or enter pairing code...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                shape = RoundedCornerShape(28.dp),
                 singleLine = true
             )
 
-            // Chat List
             if (chats.isEmpty()) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            Icons.Default.Mail,
-                            contentDescription = "No chats",
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Surface(
+                            modifier = Modifier.size(80.dp),
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Mail,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(36.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             "No messages yet",
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Enter a pairing code to start",
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                LazyColumn(modifier = Modifier.fillMaxWidth()) {
                     items(chats) { chat ->
                         ChatListItem(
                             chat = chat,
@@ -123,7 +135,6 @@ fun MessengerScreen(
         }
     }
 
-    // New Chat Dialog
     if (showNewChat) {
         AlertDialog(
             onDismissRequest = { showNewChat = false },
@@ -136,19 +147,16 @@ fun MessengerScreen(
                         value = "",
                         onValueChange = {},
                         label = { Text("Enter user ID or pairing code") },
+                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showNewChat = false }) {
-                    Text("Create")
-                }
+                TextButton(onClick = { showNewChat = false }) { Text("Create") }
             },
             dismissButton = {
-                TextButton(onClick = { showNewChat = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showNewChat = false }) { Text("Cancel") }
             }
         )
     }
@@ -160,23 +168,45 @@ fun ChatListItem(
     chat: Chat,
     onClick: () -> Unit
 ) {
-    Card(
+    val initial = (chat.name ?: "?").firstOrNull()?.uppercase() ?: "?"
+
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 1.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        onClick = onClick
+            .padding(horizontal = 12.dp, vertical = 3.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .clickable { onClick() }
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Avatar circle with initial
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    initial,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = chat.name ?: "Unknown",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 chat.lastMessage?.let {
                     Text(
@@ -186,8 +216,14 @@ fun ChatListItem(
                     )
                 }
             }
+
             if (chat.type == ChatType.GROUP) {
-                Icon(Icons.Default.Group, contentDescription = "Group chat")
+                Icon(
+                    Icons.Default.Group,
+                    contentDescription = "Group chat",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
