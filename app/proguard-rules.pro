@@ -38,3 +38,12 @@
 -keepclassmembers class kotlinx.coroutines.** {
     volatile <fields>;
 }
+# Tink (via androidx.security EncryptedSharedPreferences) references
+# errorprone annotations that are compile-time only — safe to ignore.
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
+
+# Keep Tink + AndroidX security crypto intact for the Keystore path.
+-keep class com.google.crypto.tink.** { *; }
+-keep class androidx.security.crypto.** { *; }
+-dontwarn com.google.crypto.tink.**
