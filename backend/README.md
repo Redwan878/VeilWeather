@@ -18,6 +18,28 @@ pip install -r requirements.txt
 python server.py
 ```
 
+The server listens on `0.0.0.0:$PORT` when deployed and defaults to port
+`8080` locally. Set `SECRET_KEY` in production so authentication hashes and
+tokens remain stable across process restarts.
+
+## Deploy on Render
+
+The repository includes `render.yaml` for a free Render web service. In
+Render, choose **New → Blueprint**, select this repository, and deploy. The
+service URL will be the backend base URL, for example:
+
+```text
+https://veilweather-backend.onrender.com
+```
+
+Use `wss://veilweather-backend.onrender.com/ws?token=...` for WebSocket
+connections and `https://veilweather-backend.onrender.com` for HTTP endpoints.
+The Android release build defaults to that Render URL; override it for another
+service with `./gradlew assembleRelease -PbackendBaseUrl=https://your-host`.
+The free web service sleeps after inactivity, so it is not guaranteed to run
+continuously. This backend currently stores users, tokens, and queued messages
+in memory; a restart or redeploy erases them.
+
 ## API Endpoints
 
 ### Authentication

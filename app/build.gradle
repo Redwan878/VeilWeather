@@ -16,6 +16,11 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
+        buildConfigField(
+            "String",
+            "BACKEND_BASE_URL",
+            "\"${project.findProperty("backendBaseUrl") ?: "https://veilweather-backend.onrender.com"}\""
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

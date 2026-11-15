@@ -6,6 +6,7 @@ Minimal relay service handling only ciphertext with rate limiting and auto-expir
 
 import asyncio
 import json
+import os
 import time
 import hmac
 import hashlib
@@ -17,7 +18,7 @@ from aiohttp import web
 import aiohttp_cors
 
 # Configuration
-SECRET_KEY = secrets.token_hex(32)
+SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 RATE_LIMIT_WINDOW = 60  # seconds
 RATE_LIMIT_MAX = 30  # messages per window
 TTL_MESSAGES = 3600  # 1 hour TTL for undelivered messages
@@ -41,6 +42,8 @@ class RateLimit:
 class User:
     user_id: str
     token: str
+    username: str
+    password_hash: str = ''
     websocket: Optional[web.WebSocketResponse] = None
     last_seen: float = 0
     rate_limit: RateLimit = field(default_factory=RateLimit)
@@ -107,7 +110,8 @@ class AuthManager:
         self.users[user_id] = User(
             user_id=user_id,
             token=token,
-            username=username
+            username=username,
+            password_hash=password_hash
         )
         self.tokens[token] = user_id
         
@@ -190,6 +194,7 @@ class VeilServer:
     
     def _setup_routes(self):
         app = self.app
+        app.router.add_get('/healthz', self.handle_health)
         app.router.add_post('/auth/register', self.handle_register)
         app.router.add_post('/auth/login', self.handle_login)
         app.router.add_get('/ws', self.handle_ws)
@@ -209,6 +214,9 @@ class VeilServer:
         
         for route in list(app.router.routes()):
             cors.add(route)
+
+    async def handle_health(self, request: web.Request) -> web.Response:
+        return web.json_response({'status': 'ok'})
     
     async def handle_register(self, request: web.Request) -> web.Response:
         try:
@@ -441,7 +449,8 @@ class VeilServer:
         bg = BackgroundTasks(self.messages, self.users)
         asyncio.create_task(bg.run())
     
-    def run(self, host='0.0.0.0', port=8080):
+    def run(self, host='0.0.0.0', port=None):
+        port = port or int(os.environ.get('PORT', '8080'))
         print(f"Starting VeilWeather backend on {host}:{port}")
         web.run_app(self.app, host=host, port=port)
 
