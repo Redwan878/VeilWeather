@@ -164,6 +164,7 @@ fun UnlockScreen(
             }
         }
     }
+}
 
 @Composable
 private fun UnlockCard(
@@ -211,5 +212,4 @@ private fun UnlockCard(
             }
         )
     }
-}
 }
